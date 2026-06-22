@@ -1,0 +1,41 @@
+name: Build ESCape32 Lua Ethos package on PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set build variables
+        run: |
+          PR_NUMBER='${{ github.event.pull_request.number }}'
+          echo "GIT_VER=PR-${PR_NUMBER}" >> "$GITHUB_ENV"
+
+      - name: Build package
+        run: |
+          python bin/package/build_package.py \
+            --artifact-version "${{ env.GIT_VER }}" \
+            --artifact-name "escape32-${{ env.GIT_VER }}.zip" \
+            --output-dir .
+
+      - name: Validate package manifest
+        run: python bin/package/validate_ethos_manifest_zip.py "escape32-${{ env.GIT_VER }}.zip"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: escape32-${{ env.GIT_VER }}
+          path: escape32-${{ env.GIT_VER }}.zip
+          if-no-files-found: error
+

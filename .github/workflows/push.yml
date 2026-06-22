@@ -1,0 +1,49 @@
+name: Build ESCape32 Lua Ethos package on Push
+
+on:
+  push:
+    branches:
+      - master
+      - main
+      - ESCape32-*
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set build variables
+        shell: bash
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "GIT_VER=commit-${SHORT_SHA}" >> "$GITHUB_ENV"
+
+      - name: Build package
+        shell: bash
+        run: |
+          ART="escape32-${GIT_VER}.zip"
+          python bin/package/build_package.py \
+            --artifact-version "$GIT_VER" \
+            --artifact-name "$ART" \
+            --output-dir .
+          echo "ARTIFACT=$ART" >> "$GITHUB_ENV"
+
+      - name: Validate package manifest
+        shell: bash
+        run: python bin/package/validate_ethos_manifest_zip.py "${ARTIFACT}"
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: escape32-${{ env.GIT_VER }}
+          path: ${{ env.ARTIFACT }}
+          if-no-files-found: error
+

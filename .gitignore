@@ -1,0 +1,12 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*.zip
+
+# Local Ethos simulator/radio staging
+simulators/
+
+# VS Code/Python runtime noise
+.venv/
+.vscode/.ropeproject/
+
